@@ -1,6 +1,7 @@
 package sqlmetrics
 
 import (
+	"context"
 	"database/sql"
 	"strings"
 	"time"
@@ -30,7 +31,7 @@ type Collector struct {
 }
 
 // NewCollector creates a new Collector.
-func NewCollector(stats Statser, every time.Duration, labels ...string) *Collector {
+func NewCollector(ctx context.Context, stats Statser, every time.Duration, labels ...string) *Collector {
 	allLabels := buildLabels(labels...)
 
 	c := &Collector{
@@ -55,13 +56,21 @@ func NewCollector(stats Statser, every time.Duration, labels ...string) *Collect
 	}
 
 	go func() {
-		for range time.NewTicker(every).C {
-			s := stats.Stats()
-			c.waitCount.Set(uint64(s.WaitCount))
-			c.waitDuration.Set(uint64(s.WaitDuration.Seconds()))
-			c.maxIdleClosed.Set(uint64(s.MaxIdleClosed))
-			c.maxIdleTimeClosed.Set(uint64(s.MaxIdleTimeClosed))
-			c.maxLifetimeClosed.Set(uint64(s.MaxLifetimeClosed))
+		ticker := time.NewTicker(every)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				s := stats.Stats()
+				c.waitCount.Set(uint64(s.WaitCount))
+				c.waitDuration.Set(uint64(s.WaitDuration.Seconds()))
+				c.maxIdleClosed.Set(uint64(s.MaxIdleClosed))
+				c.maxIdleTimeClosed.Set(uint64(s.MaxIdleTimeClosed))
+				c.maxLifetimeClosed.Set(uint64(s.MaxLifetimeClosed))
+			}
 		}
 	}()
 	return c
@@ -84,7 +93,7 @@ func buildLabels(labels ...string) string {
 		return ""
 	}
 	if len(labels)%2 != 0 {
-		panic("dbpstats: incorrect label pairs")
+		panic("sqlmetrics: incorrect label pairs")
 	}
 
 	var b strings.Builder

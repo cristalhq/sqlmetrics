@@ -2,6 +2,7 @@ package sqlmetrics
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"testing"
 
@@ -9,7 +10,7 @@ import (
 )
 
 func TestCollector(t *testing.T) {
-	NewCollector(&mockStatser{}, 1, "db", "table", "key", "value")
+	NewCollector(context.Background(), &mockStatser{}, 1, "db", "table", "key", "value")
 
 	b := &bytes.Buffer{}
 	metrics.WritePrometheus(b, false)
@@ -32,7 +33,7 @@ go_sql_wait_duration_seconds{db="table",key="value"} 0
 }
 
 func TestPassSQL(t *testing.T) {
-	NewCollector(&sql.DB{}, 1, "sql", "best", "a", "b")
+	NewCollector(context.Background(), &sql.DB{}, 1, "sql", "best", "a", "b")
 }
 
 func TestBadLabels(t *testing.T) {
@@ -42,7 +43,7 @@ func TestBadLabels(t *testing.T) {
 		}
 	}()
 
-	NewCollector(&mockStatser{}, 1, "mock", "stub", "onlyone")
+	NewCollector(context.Background(), &mockStatser{}, 1, "mock", "stub", "onlyone")
 }
 
 type mockStatser struct{}
