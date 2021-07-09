@@ -5,12 +5,15 @@ import (
 	"context"
 	"database/sql"
 	"testing"
+	"time"
 
 	"github.com/VictoriaMetrics/metrics"
 )
 
 func TestCollector(t *testing.T) {
-	NewCollector(context.Background(), &mockStatser{}, 1, "db", "table", "key", "value")
+	NewCollector(context.Background(), &mockStatser{}, time.Nanosecond, "db", "table", "key", "value")
+
+	time.Sleep(time.Second) // get some time to collect metrics
 
 	b := &bytes.Buffer{}
 	metrics.WritePrometheus(b, false)
@@ -18,13 +21,13 @@ func TestCollector(t *testing.T) {
 	got := b.String()
 	want := `go_sql_idle{db="table",key="value"} 4
 go_sql_in_use{db="table",key="value"} 3
-go_sql_max_idle_closed{db="table",key="value"} 0
-go_sql_max_idletime_closed{db="table",key="value"} 0
-go_sql_max_lifetime_closed{db="table",key="value"} 0
+go_sql_max_idle_closed{db="table",key="value"} 7
+go_sql_max_idletime_closed{db="table",key="value"} 8
+go_sql_max_lifetime_closed{db="table",key="value"} 9
 go_sql_max_open{db="table",key="value"} 1
 go_sql_open{db="table",key="value"} 2
-go_sql_wait_count{db="table",key="value"} 0
-go_sql_wait_duration_seconds{db="table",key="value"} 0
+go_sql_wait_count{db="table",key="value"} 5
+go_sql_wait_duration_seconds{db="table",key="value"} 6
 `
 
 	if want != got {
@@ -55,7 +58,7 @@ func (m *mockStatser) Stats() sql.DBStats {
 		InUse:              3,
 		Idle:               4,
 		WaitCount:          5,
-		WaitDuration:       6,
+		WaitDuration:       6 * time.Second,
 		MaxIdleClosed:      7,
 		MaxIdleTimeClosed:  8,
 		MaxLifetimeClosed:  9,
