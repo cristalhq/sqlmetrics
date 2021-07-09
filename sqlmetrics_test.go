@@ -13,7 +13,7 @@ import (
 func TestCollector(t *testing.T) {
 	NewCollector(context.Background(), &mockStatser{}, time.Nanosecond, "db", "table", "key", "value")
 
-	time.Sleep(2 * time.Second) // get some time to collect metrics
+	time.Sleep(time.Second) // get some time to collect metrics
 
 	b := &bytes.Buffer{}
 	metrics.WritePrometheus(b, false)
@@ -58,7 +58,7 @@ func (m *mockStatser) Stats() sql.DBStats {
 		InUse:              3,
 		Idle:               4,
 		WaitCount:          5,
-		WaitDuration:       6,
+		WaitDuration:       6 * time.Second,
 		MaxIdleClosed:      7,
 		MaxIdleTimeClosed:  8,
 		MaxLifetimeClosed:  9,
