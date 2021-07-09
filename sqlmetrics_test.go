@@ -5,12 +5,15 @@ import (
 	"context"
 	"database/sql"
 	"testing"
+	"time"
 
 	"github.com/VictoriaMetrics/metrics"
 )
 
 func TestCollector(t *testing.T) {
 	NewCollector(context.Background(), &mockStatser{}, 1, "db", "table", "key", "value")
+
+	time.Sleep(time.Second) // get some time to collect metrics
 
 	b := &bytes.Buffer{}
 	metrics.WritePrometheus(b, false)
