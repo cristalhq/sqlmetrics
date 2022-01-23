@@ -11,7 +11,7 @@ import (
 )
 
 func TestCollector(t *testing.T) {
-	NewCollector(context.Background(), &mockStatser{}, time.Nanosecond, "db", "table", "key", "value")
+	_ = makeCollector(t, &mockStatser{}, time.Nanosecond, "db", "mydb", "table", "mytable")
 
 	time.Sleep(time.Second) // get some time to collect metrics
 
@@ -19,24 +19,23 @@ func TestCollector(t *testing.T) {
 	metrics.WritePrometheus(b, false)
 
 	got := b.String()
-	want := `go_sql_idle{db="table",key="value"} 4
-go_sql_in_use{db="table",key="value"} 3
-go_sql_max_idle_closed{db="table",key="value"} 7
-go_sql_max_idletime_closed{db="table",key="value"} 8
-go_sql_max_lifetime_closed{db="table",key="value"} 9
-go_sql_max_open{db="table",key="value"} 1
-go_sql_open{db="table",key="value"} 2
-go_sql_wait_count{db="table",key="value"} 5
-go_sql_wait_duration_seconds{db="table",key="value"} 6
+	want := `go_sql_idle{db="mydb",table="mytable"} 4
+go_sql_in_use{db="mydb",table="mytable"} 3
+go_sql_max_idle_closed{db="mydb",table="mytable"} 7
+go_sql_max_idletime_closed{db="mydb",table="mytable"} 8
+go_sql_max_lifetime_closed{db="mydb",table="mytable"} 9
+go_sql_max_open{db="mydb",table="mytable"} 1
+go_sql_open{db="mydb",table="mytable"} 2
+go_sql_wait_count{db="mydb",table="mytable"} 5
+go_sql_wait_duration_seconds{db="mydb",table="mytable"} 6
 `
-
-	if want != got {
-		t.Fatalf("want %q, got %q", want, got)
+	if got != want {
+		t.Fatalf("got %s\n want %s", got, want)
 	}
 }
 
 func TestPassSQL(t *testing.T) {
-	NewCollector(context.Background(), &sql.DB{}, 1, "sql", "best", "a", "b")
+	_ = makeCollector(t, &sql.DB{}, time.Second, "sql", "best", "label", "value")
 }
 
 func TestBadLabels(t *testing.T) {
@@ -46,7 +45,7 @@ func TestBadLabels(t *testing.T) {
 		}
 	}()
 
-	NewCollector(context.Background(), &mockStatser{}, 1, "mock", "stub", "onlyone")
+	_ = makeCollector(t, &mockStatser{}, time.Second, "mock", "stub", "onlyone")
 }
 
 type mockStatser struct{}
@@ -62,5 +61,36 @@ func (m *mockStatser) Stats() sql.DBStats {
 		MaxIdleClosed:      7,
 		MaxIdleTimeClosed:  8,
 		MaxLifetimeClosed:  9,
+	}
+}
+
+func makeCollector(t testing.TB, db Statser, every time.Duration, labels ...string) *Collector {
+	t.Helper()
+	ctx, cancel := context.WithCancel(context.Background())
+	c := NewCollector(ctx, db, every, labels...)
+
+	t.Cleanup(func() {
+		cancel()
+		unregisterCollectorMetrics(labels...)
+	})
+	return c
+}
+
+func unregisterCollectorMetrics(labels ...string) {
+	names := []string{
+		"max_open",
+		"open",
+		"in_use",
+		"idle",
+		"wait_count",
+		"wait_duration_seconds",
+		"max_idle_closed",
+		"max_idletime_closed",
+		"max_lifetime_closed",
+	}
+
+	allLabels := buildLabels(labels...)
+	for _, name := range names {
+		metrics.UnregisterMetric(buildName(name, allLabels))
 	}
 }
