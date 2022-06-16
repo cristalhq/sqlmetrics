@@ -4,6 +4,7 @@
 [![pkg-img]][pkg-url]
 [![reportcard-img]][reportcard-url]
 [![coverage-img]][coverage-url]
+[![version-img]][version-url]
 
 Prometheus metrics for Go `database/sql` via [VictoriaMetrics/metrics](https://github.com/VictoriaMetrics/metrics)
 
@@ -64,3 +65,5 @@ See [these docs][pkg-url].
 [reportcard-url]: https://goreportcard.com/report/cristalhq/sqlmetrics
 [coverage-img]: https://codecov.io/gh/cristalhq/sqlmetrics/branch/main/graph/badge.svg
 [coverage-url]: https://codecov.io/gh/cristalhq/sqlmetrics
+[version-img]: https://img.shields.io/github/v/release/cristalhq/sqlmetrics
+[version-url]: https://github.com/cristalhq/sqlmetrics/releases
