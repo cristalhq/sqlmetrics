@@ -2,4 +2,4 @@ module github.com/cristalhq/sqlmetrics
 
 go 1.16
 
-require github.com/VictoriaMetrics/metrics v1.19.3
+require github.com/VictoriaMetrics/metrics v1.20.1
