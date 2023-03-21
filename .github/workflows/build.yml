@@ -15,11 +15,11 @@ on:
 jobs:
   build:
     permissions: read-all
-    uses: cristalhq/.github/.github/workflows/build.yml@e7c9d97e1ed043d608a701c651cf6c0820dc44f2 # v0.1.1
+    uses: cristalhq/.github/.github/workflows/build.yml@53335fadafd4a2409b342643789aea60465dbf40 # v0.5.0
 
   release:
     if: github.event_name == 'workflow_dispatch'
-    uses: cristalhq/.github/.github/workflows/release.yml@e7c9d97e1ed043d608a701c651cf6c0820dc44f2 # v0.1.1
+    uses: cristalhq/.github/.github/workflows/release.yml@53335fadafd4a2409b342643789aea60465dbf40 # v0.5.0
     permissions: 
       contents: write
     with:
